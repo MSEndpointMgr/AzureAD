@@ -3,6 +3,7 @@
 # https://msendpointmgr.com 
 # Create result object before DO. 
 $QueryResults = @()
+$Uri = 'https://graph.microsoft.com/beta/users'
 # Invoke REST method and fetch data until there are no pages left.
 do {
     $RetryIn = "0"
