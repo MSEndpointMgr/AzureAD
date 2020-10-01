@@ -26,9 +26,12 @@ do {
             Exit 1
         }
     } 
+    # Check if run is throttled, and skip adding data and keep current URI for retry
     if ($ThrottledRun -eq $false){
+        #If request is not throttled put data into result object
         $QueryResults += $Results.value
+        #If request is not trottled, go to nextlink if available to fetch more data
+        $uri = $Results.'@odata.nextlink'
     }
-    $uri = $Results.'@odata.nextlink'
     Start-Sleep -Seconds $RetryIn
 } until (!($uri))
