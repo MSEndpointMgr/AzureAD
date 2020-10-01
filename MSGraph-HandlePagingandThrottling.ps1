@@ -1,7 +1,8 @@
 # Scriptmethod created by: Jan Ketil Skanke 
 # Twitter @JankeSkanke
 # https://msendpointmgr.com 
-
+# Create result object before DO. 
+$QueryResults = @()
 # Invoke REST method and fetch data until there are no pages left.
 do {
     $RetryIn = "0"
