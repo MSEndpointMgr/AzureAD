@@ -8,6 +8,8 @@
         Option 2: Create an app registration that has application: user.read.all reports.read.all and delegate: UserAuthenticationMethod.ReadWrite.All
         Either app needs to be configured with "Treat application as a public client = YES"
 
+        BLOG POST: https://msendpointmgr.com/2020/10/19/prepopulate-mfa-phone-authentication-solution/
+
     .NOTES
         Authors:     Jan Ketil Skanke, Sandy Zeng, Michael Mardahl
         Contact:     @JankeSkanke + @Sandy_Tsang + @Michael_Mardahl
