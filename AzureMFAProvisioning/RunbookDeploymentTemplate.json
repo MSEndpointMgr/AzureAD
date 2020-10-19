@@ -28,11 +28,11 @@
             "description": "Specify the region for your automation account"
         }
     },
-    "_artifactsLocation": {
+    "ScriptLocation": {
         "type": "string",
-        "defaultValue": "https%3A%2F%2Fraw.githubusercontent.com%2FMSEndpointMgr%2FAzureAD%2Fmaster%2FAzureMFAProvisioning%2FAzAutomationScript4MFAPrePopulate.ps1",
+        "defaultValue": "https://raw.githubusercontent.com/MSEndpointMgr/AzureAD/master/AzureMFAProvisioning/AzAutomationScript4MFAPrePopulate.ps1",
         "metadata": {
-            "description": "URI to artifacts location"
+            "description": "URI to MFA script location"
         }
     }
 },
@@ -41,7 +41,7 @@
         "runbooks": [
             {
                 "name": "AzAutomationScript4MFAPrePopulate",
-                "url": "[parameters('_artifactsLocation')]",
+                "url": "[parameters('ScriptLocation')]",
                 "version": "1.0.0.0",
                 "type": "PowerShell",
                 "description": "MFA Prepopulation solution"
@@ -66,7 +66,7 @@
             "logProgress": false,
             "logVerbose": true,
              "publishContentLink": { 
-                 "uri":"[parameters('_artifactsLocation')]",
+                 "uri":"[parameters('ScriptLocation')]",
                  "version": "[variables('asrScripts').runbooks[copyIndex()].version]"                  } 
 
         }
