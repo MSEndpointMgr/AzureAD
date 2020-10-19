@@ -437,7 +437,7 @@ foreach ($user in $allUsersToRegisterWithMobile) {
         }
     }
 }
-Write-Output "Stats: $($Count) users has been processed successfully."
+Write-Output "Stats: $($Count) users have been processed successfully."
 Write-Verbose "Execution completed!" -Verbose
 #endregion update MFA registration
 #endregion execute
