@@ -59,7 +59,7 @@
             "logProgress": false,
             "logVerbose": true,
              "publishContentLink": { 
-                 "uri":"[parameters('ScriptLocation')]",
+                 "uri":"[variables('asrScripts').runbooks[copyIndex()].url]",
                  "version": "[variables('asrScripts').runbooks[copyIndex()].version]"                  } 
 
         }
