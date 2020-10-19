@@ -1,36 +1,47 @@
 {
-  "$schema": "http://schemas.microsoft.org/azure/deploymentTemplate?api-version=2015-01-01#",
-  "contentVersion": "1.0",
-  "parameters": {
-    "New or existing Automation account": {
-      "type": "string",
-      "allowedValues": [
-        "New",
-        "Existing"
-      ],
-      "metadata": {
-        "description": "Select whether you want to create a new Automation account or use an existing account. WARNING: if you select NEW but use an Automation account name that already exists in your subscription, you will not be notified that your account is being updated. The pricing tier for the account will be set to free and any tags on the account will be erased."
-      }
+"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+"contentVersion": "1.0.0.0",
+"parameters": {
+    "automationAccountName": {
+        "type": "string",
+        "defaultValue": "Automation-MFA",
+        "metadata": {
+            "description": "Automation Account"
+        }
     },
-    "Automation Account Name": {
-      "type": "string",
-      "metadata": {
-        "description": "The module will be imported to this Automation account. If you want to import your module to an existing account, make sure the resource group matches and you have entered the correct name. The account name must be between 6 to 50 characters, and can contain only letters, numbers, and hyphens."
-      }
+    "automationRegion": {
+        "defaultValue": "northeurope",
+        "type": "string",
+        "allowedValues": [
+            "westeurope",
+            "southeastasia",
+            "eastus2",
+            "southcentralus",
+            "japaneast",
+            "northeurope",
+            "canadacentral",
+            "australiasoutheast",
+            "centralindia",
+            "westcentralus"
+        ],
+        "metadata": {
+            "description": "Specify the region for your automation account"
+        }
     },
-    "Automation Account Location": {
-      "type": "string",
-      "metadata": {
-        "description": "The location to deploy the Automation account in. If you select an existing account, the location field will not be used."
-      }
+    "ScriptLocation": {
+        "type": "string",
+        "defaultValue": "https://raw.githubusercontent.com/MSEndpointMgr/AzureAD/master/AzureMFAProvisioning/AzAutomationScript4MFAPrePopulate.ps1",
+        "metadata": {
+            "description": "URI to MFA script location"
+        }
     }
-  },
+},
 "variables": {
-    "Scripts": {
+    "asrScripts": {
         "runbooks": [
             {
                 "name": "AzAutomationScript4MFAPrePopulate",
-                "url": "https://raw.githubusercontent.com/MSEndpointMgr/AzureAD/master/AzureMFAProvisioning/AzAutomationScript4MFAPrePopulate.ps1",
+                "url": "[parameters('ScriptLocation')]",
                 "version": "1.0.0.0",
                 "type": "PowerShell",
                 "description": "MFA Prepopulation solution"
@@ -38,28 +49,28 @@
         ]
       }
 },
-  "resources": [
- {
+ "resources": [
+
+    {
         "apiVersion": "2015-10-31",
         "type": "Microsoft.Automation/automationAccounts/runbooks",
-        "name": "[concat(parameters('Automation Account Name'), '/', variables('Scripts').runbooks[copyIndex()].Name)]",
-        "location": "[parameters('Automation Account Location')]", 
+        "name": "[concat(parameters('automationAccountName'), '/', variables('asrScripts').runbooks[copyIndex()].Name)]",
+        "location": "[parameters('automationRegion')]", 
         "copy": {
             "name": "runbooksLoop",
-            "count": "[length(variables('Scripts').runbooks)]"
+            "count": "[length(variables('asrScripts').runbooks)]"
         },
         "properties": {
-            "description": "[variables('Scripts').runbooks[copyIndex()].description]",
-            "runbookType": "[variables('Scripts').runbooks[copyIndex()].type]",
+            "description": "[variables('asrScripts').runbooks[copyIndex()].description]",
+            "runbookType": "[variables('asrScripts').runbooks[copyIndex()].type]",
             "logProgress": false,
             "logVerbose": true,
              "publishContentLink": { 
                  "uri":"[parameters('ScriptLocation')]",
-                 "version": "[variables('Scripts').runbooks[copyIndex()].version]"                  } 
+                 "version": "[variables('asrScripts').runbooks[copyIndex()].version]"                  } 
 
         }
     }
-  ],
-  "outputs": {}
+],
+"outputs": {}
 }
-
