@@ -1,0 +1,75 @@
+{
+"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+"contentVersion": "1.0.0.0",
+"parameters": {
+    "automationAccountName": {
+        "type": "string",
+        "defaultValue": "Automation-MFA",
+        "metadata": {
+            "description": "Automation Account"
+        }
+    },
+    "automationRegion": {
+        "defaultValue": "northeurope",
+        "type": "string",
+        "allowedValues": [
+            "westeurope",
+            "southeastasia",
+            "eastus2",
+            "southcentralus",
+            "japaneast",
+            "northeurope",
+            "canadacentral",
+            "australiasoutheast",
+            "centralindia",
+            "westcentralus"
+        ],
+        "metadata": {
+            "description": "Specify the region for your automation account"
+        }
+    },
+    "_artifactsLocation": {
+        "type": "string",
+        "defaultValue": "https%3A%2F%2Fraw.githubusercontent.com%2FMSEndpointMgr%2FAzureAD%2Fmaster%2FAzureMFAProvisioning%2FAzAutomationScript4MFAPrePopulate.ps1",
+        "metadata": {
+            "description": "URI to artifacts location"
+        }
+    }
+},
+"variables": {
+    "asrScripts": {
+        "runbooks": [
+            {
+                "name": "AzAutomationScript4MFAPrePopulate",
+                "url": "[parameters('_artifactsLocation')]",
+                "version": "1.0.0.0",
+                "type": "PowerShell",
+                "description": "MFA Prepopulation solution"
+            }
+        ]
+      }
+},
+ "resources": [
+
+    {
+        "apiVersion": "2015-10-31",
+        "type": "Microsoft.Automation/automationAccounts/runbooks",
+        "name": "[concat(parameters('automationAccountName'), '/', variables('asrScripts').runbooks[copyIndex()].Name)]",
+        "location": "[parameters('automationRegion')]", 
+        "copy": {
+            "name": "runbooksLoop",
+            "count": "[length(variables('asrScripts').runbooks)]"
+        },
+        "properties": {
+            "description": "[variables('asrScripts').runbooks[copyIndex()].description]",
+            "runbookType": "[variables('asrScripts').runbooks[copyIndex()].type]",
+            "logProgress": false,
+            "logVerbose": true,
+             "publishContentLink": { 
+                 "uri":"[parameters('_artifactsLocation')]",
+                 "version": "[variables('asrScripts').runbooks[copyIndex()].version]"                  } 
+
+        }
+    }
+],
+"outputs": {}
