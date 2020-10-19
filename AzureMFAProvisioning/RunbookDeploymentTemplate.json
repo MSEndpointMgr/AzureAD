@@ -27,13 +27,6 @@
         "metadata": {
             "description": "Specify the region for your automation account"
         }
-    },
-    "ScriptLocation": {
-        "type": "string",
-        "defaultValue": "https://raw.githubusercontent.com/MSEndpointMgr/AzureAD/master/AzureMFAProvisioning/AzAutomationScript4MFAPrePopulate.ps1",
-        "metadata": {
-            "description": "URI to MFA script location"
-        }
     }
 },
 "variables": {
@@ -41,7 +34,7 @@
         "runbooks": [
             {
                 "name": "AzAutomationScript4MFAPrePopulate",
-                "url": "[parameters('ScriptLocation')]",
+                "url": "https://raw.githubusercontent.com/MSEndpointMgr/AzureAD/master/AzureMFAProvisioning/AzAutomationScript4MFAPrePopulate.ps1",
                 "version": "1.0.0.0",
                 "type": "PowerShell",
                 "description": "MFA Prepopulation solution"
