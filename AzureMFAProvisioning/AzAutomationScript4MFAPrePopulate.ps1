@@ -31,6 +31,7 @@ $script:appCert = Get-AutomationCertificate -Name "AzureRunAsCertificate"
 $script:authenticationCredentials = Get-AutomationPSCredential -Name 'DelegateServiceAccount' #Change this to your own Azure Automation credential
 $UseStagingGroup = Get-AutomationVariable -Name "EnableStagingGroup" #Set this Automation variable to $true or $false to enable use of the Staging/Pilot group.
 $StagingGroupName = Get-AutomationVariable -Name "StagingGroupName" #Set this Automation variable to the name of your staging group or comment out if you absolutely never are going to use staging.
+$VerbosePreference = "continue"
 #endregion declarations
 
 #region functions
@@ -315,16 +316,31 @@ function get-authToken {
     $script:UserTokenExpiresOnUTC = $response.ExpiresOn.UtcDateTime
     return $authToken
 }#endfunction
-#Fixing incorrectly formattet phone numbers (Denmark - also works for others)
+#Fixing incorrectly formattet phone numbers (DK, PL, UK - also works for some others)
 function update-phoneFormatDK ($phoneNumber) {
-    $parsedPhone = $phoneNumber -replace '\s',''
-    if ($parsedPhone.Length -eq 8) {
-        $parsedPhone = "+45 $parsedPhone"
-    } elseif ($parsedPhone.Length -eq 11) {
-        $parsedPhone = $parsedPhone.Insert(3," ")
-    } elseif ($parsedPhone.Length -eq 13) {
-        $parsedPhone = $parsedPhone.Insert(3," ")
-    } else {$parsedPhone = $false}
+    if ($phoneNumber -notmatch '((\+[0-9]{1,3}[ ])[0-9]{4,})'){
+        #the number does not comply with graph requirements, so this will try to fix it.
+        $parsedPhone = $phoneNumber -replace '\s',''    #remove all spaces
+        if ($parsedPhone.Length -eq 6) {
+            $parsedPhone = "+298 $parsedPhone"          #adding DK faroe islands country code
+        } elseif ($parsedPhone.Length -eq 8) {
+            $parsedPhone = "+45 $parsedPhone"           #adding PL country code
+        } elseif ($parsedPhone.Length -eq 9) {
+            $parsedPhone = "+48 $parsedPhone"           #adding PL country code
+        } elseif ($parsedPhone.Length -eq 10) {
+            $parsedPhone = $parsedPhone.Insert(4," ")   #adding missing space after country code for DK (faroe islands)
+        } elseif ($parsedPhone.Length -eq 11) {
+            $parsedPhone = $parsedPhone.Insert(3," ")   #adding missing space after country code for DK
+        } elseif ($parsedPhone.Length -eq 12) {
+            $parsedPhone = $parsedPhone.Insert(3," ")   #adding missing space after country code for PL
+        } elseif ($parsedPhone.Length -eq 13) {
+            $parsedPhone = $parsedPhone.Insert(3," ")   #adding missing space after country code for UK
+        } else {
+            $parsedPhone = $false
+        }
+    } else {
+        $parsedPhone = $phoneNumber
+    }
     return $parsedPhone
 }#endfunction
 
@@ -407,37 +423,40 @@ foreach ($user in $allUsersToRegisterWithMobile) {
         $authTokenUser = get-authToken -DelegatedGrant -TenantId $Tenant -ClientId $AppId -UserCredential $authenticationCredentials
     } 
     $userMobilePhone = ($allHasMobileUsers | Where-Object {$_.userPrincipalName -eq "$user"}).mobilePhone
-    #fix incorrectly formatted mobile number - supported country mobile numbers are Norway
-    $parsedPhone = update-phoneFormatNO -phoneNumber $userMobilePhone
-    #If no match for NO try DK
-    <#if ($parsedPhone -eq $false){
-        $parsedPhone = update-phoneFormatDK -phoneNumber $userMobilePhone
-    }#>
-    #If still no match - skip (more )
+    
+    #fix incorrectly formatted mobile number
+    #Generic phone parser - change to the NO or DK function or make your own
+    if ($parsedPhone -notmatch '((\+[0-9]{1,3}[ ])[0-9]{4,})'){ $parsedPhone -eq $false }
+    
+    #Norway Phone parser
+    #$parsedPhone = update-phoneFormatNO -phoneNumber $userMobilePhone
+    
+    #Denmark, Faroe, Poland, UK Phone parser
+    #$parsedPhone = update-phoneFormatDK -phoneNumber $userMobilePhon
+    
+    #If still no match - skip
     if ($parsedPhone -eq $false){
         Write-output "Status: Number Format error; User: $($user); Message: MobilePhone $userMobilePhone"
-    } else {
-        <#if ($parsedPhone -notmatch '((\+[0-9]{1,3}[ ])[0-9]{4,})'){
-            Write-output "FORMAT ERROR: Mobile phone is $userMobilePhone - fix it!"
-            continue
-        }#>
-        #sending update via the Graph API using delegated permissions (App permissions are not supported yet in beta)
-        #formatting body for post action
-        $ObjectBody = @{
-            'phoneNumber' = "$parsedPhone"
-            'phoneType' = "mobile"
-        }
-        $JSON = ConvertTo-Json -InputObject $ObjectBody  
-        #sending update to graph and report on success
-        try {
-            $response = Invoke-MSGraphOperation -Post -APIVersion $graphVersion -Headers $authTokenUser -Body $JSON -Resource "users/$user/authentication/phoneMethods" -ErrorAction Stop
-            write-output "Status: MFA Phonemethod provisioned successfully; User: $($user); Message: MobilePhone $($parsedPhone)"
-            $Count++
-            }
-        catch {
-            write-output "Status: MFA Phonemethod provisioning failed; User: $($user); Message: $($_.Exception.Message)"
-        }
+        continue #skipping this iteration of the loop
+    } 
+
+    #sending update via the Graph API using delegated permissions (App permissions are not supported yet in beta)
+    #formatting body for post action
+    $ObjectBody = @{
+        'phoneNumber' = "$parsedPhone"
+        'phoneType' = "mobile"
     }
+    $JSON = ConvertTo-Json -InputObject $ObjectBody  
+    #sending update to graph and report on success
+    try {
+        $response = Invoke-MSGraphOperation -Post -APIVersion $graphVersion -Headers $authTokenUser -Body $JSON -Resource "users/$user/authentication/phoneMethods" -ErrorAction Stop
+        write-output "Status: MFA Phonemethod provisioned successfully; User: $($user); Message: MobilePhone $($parsedPhone)"
+        $Count++
+        }
+    catch {
+        write-output "Status: MFA Phonemethod provisioning failed; User: $($user); Message: $($_.Exception.Message)"
+    }
+    
 }
 Write-Output "Stats: $($Count) users have been processed successfully."
 Write-Verbose "Execution completed!" -Verbose
