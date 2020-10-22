@@ -2,21 +2,24 @@
     .SYNOPSIS
         This script is for getting all non-MFA registered users - and setting their authentication phone for SMS
     .DESCRIPTION
-        You need to configure the required strings as Azure Automation variables.
-        You also need to create an account that has authentication admin rights and no MFA requirement.
-        Option 1: Use and configure the Azure Run AS Account as Service Principal, and give it the following permissions: user.read.all reports.read.all and delegate: UserAuthenticationMethod.ReadWrite.All
-        Option 2: Create an app registration that has application: user.read.all reports.read.all and delegate: UserAuthenticationMethod.ReadWrite.All
+        You need to configure the required strings as Azure Automation variables (EnableStagingGroup and StagingGroupName).
+        You also need to create a service account that has authentication admin rights and no MFA requirement to act as a delegate.
+        Option 1: Use and configure the Azure Run AS Account as Service Principal, and give it the following permissions: user.read.all reports.read.all groupmember.read.all and delegate: UserAuthenticationMethod.ReadWrite.All
+        Option 2: Create an app registration that has application: user.read.all reports.read.all groupmember.read.all and delegate: UserAuthenticationMethod.ReadWrite.All
         Either app needs to be configured with "Treat application as a public client = YES"
 
         BLOG POST: https://msendpointmgr.com/2020/10/19/prepopulate-mfa-phone-authentication-solution/
 
     .NOTES
         Authors:     Jan Ketil Skanke, Sandy Zeng, Michael Mardahl
-        Contact:     @JankeSkanke + @Sandy_Tsang + @Michael_Mardahl
+        Contact:     @JankeSkanke + @Sandy_Tsang + @Michael_Mardahl on twitter
+        License:     MIT - Leave author details
         Created:     2020-10-07
-        Updated:     2020-10-07
+        Updated:     2020-10-22
         Version history:
         1.0.0 - (2020-05-20) Initial Version
+        1.1.0 - (2020-10-22) Ready for blog release
+        
     #>    
 
 #requires -module MSAL.PS
@@ -375,7 +378,7 @@ if($appCert){
 } elseif ($appSecret) {
     $authTokenApp = get-authToken -ApplicationGrant -ClientSecret $appSecret -ClientId $AppId -TenantId $Tenant
 } else {
-    Write-Error -Message "Neither a Secret or a Client Certificate was provided! Exit Script"
+    Write-Error -Message "Neither a Secret or a Client Certificate was provided! Terminating."
     exit 1
 }
 #Get Delegated permissions auth token
@@ -386,13 +389,13 @@ $authTokenUser = get-authToken -DelegatedGrant -TenantId $Tenant -ClientId $AppI
 #Get all users with a mobile phone in Azure AD
 #Check Runstate whether staging group is being used 
 if ($UseStagingGroup -eq $true){
-    Write-Output "Runstate is using Staging Group: $StagingGroupName"
+    Write-Output "Runstate is using staging group: $StagingGroupName"
     $StagingGroup = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Headers $authTokenApp -Resource "groups?filter=displayName eq `'$StagingGroupName`'"
     $stagingGroupId = $StagingGroup.value.id
     $allHasMobileUsers = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Headers $authTokenApp -Resource "groups/$stagingGroupId/transitiveMembers/microsoft.graph.user?count=true&filter=userType ne 'Guest' and mobilePhone ne null"
     $allHasMobileUsersUPN = $allHasMobileUsers.userPrincipalName
 } else {
-    Write-Output "Runstate is Processing All Users"
+    Write-Output "Runstate is Processing all users"
     $allHasMobileUsers = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Headers $authTokenApp -Resource "users?count=true&select=userPrincipalName,mobilePhone&filter=userType ne 'Guest' and mobilePhone ne null"
     $allHasMobileUsersUPN = $allHasMobileUsers.userPrincipalName
 }
@@ -402,14 +405,14 @@ $allNonMFAUsers = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Header
 $allNonMFAUsersUPN = $allNonMFAUsers.userPrincipalName
 
 #Compare the two results and get only the non-MFA registered users that have a mobile phone in Azure AD so we can update their registration
-Write-output "Stats: Numbers of users without MFA is: $($allNonMFAUsersUPN.count)"
+Write-output "Stats: Number of users without MFA is: $($allNonMFAUsersUPN.count)"
 if ($allNonMFAUsersUPN.count -eq 0 -or $allHasMobileUsersUPN.count -eq 0){
     Write-Output "There are no eligible users for this run. Exit Script"
     Exit 0
 } else {
     $allUsersToRegisterWithMobile = (Compare-Object -ReferenceObject $allNonMFAUsersUPN -DifferenceObject $allHasMobileUsersUPN -Includeequal -ExcludeDifferent).InputObject
 }
-Write-output "Stats: Numbers of targeted users without MFA and a mobile number in AAD is: $($allUsersToRegisterWithMobile.Count)"
+Write-output "Stats: Number of targeted users without MFA and a mobile number in AAD is: $($allUsersToRegisterWithMobile.Count)"
 #endregion get applicable users
 
 #region update MFA registration
