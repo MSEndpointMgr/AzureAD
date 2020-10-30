@@ -19,6 +19,7 @@
         Version history:
         1.0.0 - (2020-05-20) Initial Version
         1.1.0 - (2020-10-22) Ready for blog release
+        1.1.1 - (2020-10-30) Bugix + Generic Parser
         
     #>    
 
