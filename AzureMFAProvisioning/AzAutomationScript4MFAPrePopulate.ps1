@@ -429,7 +429,16 @@ foreach ($user in $allUsersToRegisterWithMobile) {
     
     #fix incorrectly formatted mobile number
     #Generic phone parser - change to the NO or DK function or make your own
-    if ($userMobilePhone -notmatch '((\+[0-9]{1,3}[ ])[0-9]{4,})'){ $parsedPhone -eq $false }
+    #Removing all spaces for parse and upload
+    $parsedPhone = $userMobilePhone -replace '\s',''
+    
+    #Generic Phone Parser - Check that it starts with + and a minumum of 10 digits. 
+    if ($parsedPhone -notmatch '^(\+s*([0-9][\s-]*){10,}$)'){ 
+        $parsedPhone = $false 
+    }
+
+    #comment out old parsing - parsing below requires countrycode <space> number
+    #if ($userMobilePhone -notmatch '((\+[0-9]{1,3}[ ])[0-9]{4,})'){ $parsedPhone -eq $false }
     
     #Norway Phone parser
     #$parsedPhone = update-phoneFormatNO -phoneNumber $userMobilePhone
