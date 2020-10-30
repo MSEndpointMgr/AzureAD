@@ -392,8 +392,8 @@ if ($UseStagingGroup -eq $true){
     Write-Output "Runstate is using staging group: $StagingGroupName"
     $StagingGroup = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Headers $authTokenApp -Resource "groups?filter=displayName eq `'$StagingGroupName`'"
     $stagingGroupId = $StagingGroup.value.id
-    $allHasMobileUsers = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Headers $authTokenApp -Resource "groups/$stagingGroupId/transitiveMembers/microsoft.graph.user?count=true&filter=userType ne 'Guest' and mobilePhone ne null"
-    $allHasMobileUsersUPN = $allHasMobileUsers.userPrincipalName
+    $allHasMobileUsers = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Headers $authTokenApp -Resource "groups/$stagingGroupId/transitiveMembers/microsoft.graph.user?count=true"#&filter=userType ne 'Guest' and mobilePhone ne null"
+    $allHasMobileUsersUPN = $allHasMobileUsers.value | Where-Object {$_.userType -ne 'Guest' -and $_.mobilephone -ne $null} | select -ExpandProperty userPrincipalName
 } else {
     Write-Output "Runstate is Processing all users"
     $allHasMobileUsers = Invoke-MSGraphOperation -Get -APIVersion $graphVersion -Headers $authTokenApp -Resource "users?count=true&select=userPrincipalName,mobilePhone&filter=userType ne 'Guest' and mobilePhone ne null"
@@ -425,7 +425,7 @@ foreach ($user in $allUsersToRegisterWithMobile) {
         Write-Verbose -Message "Refreshing token before expiry.. continue loop script" -Verbose
         $authTokenUser = get-authToken -DelegatedGrant -TenantId $Tenant -ClientId $AppId -UserCredential $authenticationCredentials
     } 
-    $userMobilePhone = ($allHasMobileUsers | Where-Object {$_.userPrincipalName -eq "$user"}).mobilePhone
+    $userMobilePhone = ($allHasMobileUsers.value | Where-Object {$_.userPrincipalName -eq "$user"}).mobilePhone
     
     #fix incorrectly formatted mobile number
     #Generic phone parser - change to the NO or DK function or make your own
@@ -446,7 +446,7 @@ foreach ($user in $allUsersToRegisterWithMobile) {
     #sending update via the Graph API using delegated permissions (App permissions are not supported yet in beta)
     #formatting body for post action
     $ObjectBody = @{
-        'phoneNumber' = "$parsedPhone"
+        'phoneNumber' = "$userMobilePhone"
         'phoneType' = "mobile"
     }
     $JSON = ConvertTo-Json -InputObject $ObjectBody  
