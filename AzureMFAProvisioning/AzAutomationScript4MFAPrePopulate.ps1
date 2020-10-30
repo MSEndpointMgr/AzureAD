@@ -429,13 +429,13 @@ foreach ($user in $allUsersToRegisterWithMobile) {
     
     #fix incorrectly formatted mobile number
     #Generic phone parser - change to the NO or DK function or make your own
-    if ($parsedPhone -notmatch '((\+[0-9]{1,3}[ ])[0-9]{4,})'){ $parsedPhone -eq $false }
+    if ($userMobilePhone -notmatch '((\+[0-9]{1,3}[ ])[0-9]{4,})'){ $parsedPhone -eq $false }
     
     #Norway Phone parser
     #$parsedPhone = update-phoneFormatNO -phoneNumber $userMobilePhone
     
     #Denmark, Faroe, Poland, UK Phone parser
-    #$parsedPhone = update-phoneFormatDK -phoneNumber $userMobilePhon
+    #$parsedPhone = update-phoneFormatDK -phoneNumber $userMobilePhone
     
     #If still no match - skip
     if ($parsedPhone -eq $false){
