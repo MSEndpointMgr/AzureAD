@@ -20,11 +20,10 @@
         1.0.0 - (2020-05-20) Initial Version
         1.1.0 - (2020-10-22) Ready for blog release
         1.1.1 - (2020-10-30) Bugix + Generic Parser
-        
+        2.0.0 - (2021-03-23) Script updated to use App Token only. All references to Delegated auth removed. 
     #>    
 
 #requires -module MSAL.PS
-
 #region declarations
 $connection = Get-AutomationConnection -Name AzureRunAsConnection
 $script:Tenant = $connection.TenantID 
@@ -277,7 +276,7 @@ function get-authToken {
         [String]
         $ClientId
     )
-
+    
     #Get a Graph API Token via Application Grant
     try {
         if($ClientCertificate) {
