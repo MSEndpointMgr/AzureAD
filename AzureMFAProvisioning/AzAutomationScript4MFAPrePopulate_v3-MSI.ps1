@@ -19,7 +19,7 @@
 		2.1.0 - (2022-03-03) Script updated to use System Managed Identity in Azure Automation and MSGraphRequest Module - update by Michael Mardahl
     #>    
 
-#requires -module MSAL.PS, MSGraphRequest
+#requires -module MSAL.PS, MSGraphRequest, Az.Accounts
 #region declarations
 $script:graphVersion = 'beta'
 $UseStagingGroup = Get-AutomationVariable -Name "EnableStagingGroup" #Set this Automation variable to $true or $false to enable use of the Staging/Pilot group.
