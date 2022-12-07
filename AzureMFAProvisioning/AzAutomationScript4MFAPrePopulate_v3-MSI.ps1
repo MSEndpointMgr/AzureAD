@@ -16,7 +16,7 @@
         1.1.0 - (2020-10-22) Ready for blog release
         1.1.1 - (2020-10-30) Bugix + Generic Parser
         2.0.0 - (2021-03-23) Script updated to use App Token only. All references to Delegated auth removed - update by Jan Ketil Skanke
-		2.1.0 - (2022-03-03) Script updated to use System Managed Identity in Azure Automation and MSGraphRequest Module - update by Michael Mardahl
+	2.1.0 - (2022-03-03) Script updated to use System Managed Identity in Azure Automation and MSGraphRequest Module - update by Michael Mardahl
     #>    
 
 #requires -module MSAL.PS, MSGraphRequest, Az.Accounts
