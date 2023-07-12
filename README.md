@@ -1,3 +1,3 @@
-# AzureAD
+# AzureAD / Entra ID
 
-## A collection of Azure AD related scripts and automations 
+## A collection of Entra ID related scripts and automations 
